@@ -201,6 +201,7 @@
 			this.pageType = (window.location.href.match(/https:\/\/fantia\.jp\/posts\/*/g) != null) ? `post` : `backnumber`;
 			let qs = new URLSearchParams((this.pageType == `post`) ? `` : (window.location.search == ``) ? $(`div.text-center>a.active`).attr("href").split("?")[1] : window.location.search);
 			this.jsonUrl = `https://fantia.jp/api/v1/${(this.pageType == `post`)? `posts/${window.location.href.split("/").pop()}`: `fanclub/backnumbers/monthly_contents/plan/${qs.get("plan")}/month/${qs.get("month")}`}`;
+			const xCsrfToken = $("meta[name='csrf-token']").attr("content");
 
 			let authorId = $("h1.fanclub-name>a").attr(`href`).split("/").pop();
 
@@ -243,14 +244,20 @@
 			this.metaJson = {};
 			this.metaData = {};
 			let self = this;
-			$.get(this.jsonUrl, (json) => {
-				self.metaJson = json;
-				let data = json[self.pageType];
-				self.metaData = {
-					user: data.fanclub.user.name,
-					uid: data.fanclub.id,
-					content: data[`${self.pageType}_contents`]
-				};
+			$.get({
+				url: this.jsonUrl,
+				headers: {
+					'X-CSRF-Token': xCsrfToken,
+				},
+				success: (json) => {
+					self.metaJson = json;
+					let data = json[self.pageType];
+					self.metaData = {
+						user: data.fanclub.user.name,
+						uid: data.fanclub.id,
+						content: data[`${self.pageType}_contents`]
+					};
+				}
 			});
 			return this;
 		}
